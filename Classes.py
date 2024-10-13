@@ -1,33 +1,11 @@
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.remote.webdriver import WebDriver
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.common.exceptions import (StaleElementReferenceException,
-                                       TimeoutException,
-                                       UnexpectedAlertPresentException,
-                                       NoSuchFrameException,
-                                       NoAlertPresentException,
-                                       WebDriverException,
-                                       InvalidElementStateException
-                                       )
-
-from urllib.parse import urlparse, urljoin
-import json
 import pprint
-import datetime
-import tldextract
-import math
-import os
-import traceback
 import random
-import re
 import time
-import itertools
 import string
 
 from Functions import *
 from extractors.Events import extract_events
-from extractors.Forms import extract_forms, parse_form
+from extractors.Forms import extract_forms
 from extractors.Urls import extract_urls
 from extractors.Iframes import extract_iframes
 from extractors.Ui_forms import extract_ui_forms
@@ -449,10 +427,12 @@ class Ui_form:
 
 
 class Crawler:
-    def __init__(self, driver, url):
+    def __init__(self, driver, url, browser):
         self.driver = driver
         # Start url
         self.url = url
+        self.browser = browser
+        self.url_domain = url.split('//')[1]
         self.graph = Graph()
 
         self.session_id = str(time.time()) + "-" + str(random.randint(1,10000000))
@@ -514,11 +494,12 @@ class Crawler:
 
         self.graph.data['urls'] = {}
         self.graph.data['form_urls'] = {}
-        open("run.flag", "w+").write("1")
-        open("queue.txt", "w+").write("")
-        open("command.txt", "w+").write("")
+        open(f"output/{self.url_domain}-{self.browser}-run.flag", "w+").write("1")
+        open(f"output/{self.url_domain}-{self.browser}-queue.txt", "w+").write("")
+        open(f"output/{self.url_domain}-{self.browser}-command.txt", "w+").write("")
 
         random.seed( 6 ) # chosen by fair dice roll
+
 
         still_work = True
         while still_work:
@@ -529,13 +510,13 @@ class Crawler:
                 #f = open("graph.txt", "w")
                 #f.write( self.graph.toMathematica() )
 
-                if "0" in open("run.flag", "r").read():
+                if "0" in open(f"output/{self.url_domain}-{self.browser}-run.flag", "r").read():
                     logging.info("Run set to 0, stop crawling")
                     break
-                if "2" in open("run.flag", "r").read():
+                if "2" in open(f"output/{self.url_domain}-{self.browser}-run.flag", "r").read():
                     logging.info("Run set to 2, pause crawling")
                     input("Crawler paused, press enter to continue")
-                    open("run.flag", "w+").write("3")
+                    open(f"output/{self.url_domain}-{self.browser}-run.flag", "w+").write("3")
 
                 n_gets = 0
                 n_forms = 0
@@ -853,7 +834,7 @@ class Crawler:
 
         # Save successful attacks to file
         if successful_xss:
-            f = open("successful_injections-"+self.session_id+".txt", "a+")
+            f = open(f"output/{self.url_domain}-{self.browser}-successful_injections-"+self.session_id+".txt", "a+")
             for xss in successful_xss:
                 attack_entry = self.get_table_entry(xss)
                 if attack_entry:
@@ -1129,7 +1110,7 @@ class Crawler:
                 form_xss = self.path_attack_form(driver, vector)
 
                 # Save to file
-                f = open("form_xss.txt", "a+")
+                f = open(f"output/{self.url_domain}-{self.browser}-form_xss.txt", "a+")
                 for xss in form_xss:
                     if xss in self.attack_lookup_table:
                         f.write(str(self.attack_lookup_table)  + "\n")
@@ -1156,9 +1137,9 @@ class Crawler:
         print("Successful attacks: ", len(successful_xss))
         print("-"*50)
 
-        f = open("successful_xss.txt", "w")
+        f = open(f"output/{self.url_domain}-{self.browser}-successful_xss.txt", "w")
         f.write(str(successful_xss))
-        f = open("attack_lookup_table.txt", "w")
+        f = open(f"output/{self.url_domain}-{self.browser}-attack_lookup_table.txt", "w")
         f.write(str(self.attack_lookup_table))
 
         print("ATTACK TABLE\n\n\n\n")
@@ -1182,7 +1163,6 @@ class Crawler:
             if vector_type == "get":
                 logging.info("-- Checking: " + str(url))
                 driver.get(url)
-
                 # Inspect
                 successful_xss = successful_xss.union( self.inspect_attack(url) )
 
@@ -1191,7 +1171,7 @@ class Crawler:
 
     # Handle priority
     def next_unvisited_edge(self, driver, graph):
-        user_url = open("queue.txt", "r").read()
+        user_url = open(f"output/{self.url_domain}-{self.browser}-queue.txt", "r").read()
         if user_url:
             print("User supplied url: ", user_url)
             logging.info("Adding user from URLs " + user_url)
@@ -1204,8 +1184,8 @@ class Crawler:
 
             print(new_edge)
 
-            open("queue.txt", "w+").write("")
-            open("run.flag", "w+").write("3")
+            open(f"output/{self.url_domain}-{self.browser}-queue.txt", "w+").write("")
+            open(f"output/{self.url_domain}-{self.browser}-run.flag", "w+").write("3")
 
             successful = follow_edge(driver, graph, new_edge)
             if successful:
@@ -1362,7 +1342,7 @@ class Crawler:
                 if self.io_graph[tracker]['reflected']:
                     print("EDGE FROM ", self.io_graph[tracker]['injected'], "to", self.io_graph[tracker]['reflected'])
 
-            f = open("graph_mathematica.txt", "w")
+            f = open(f"output/{self.url_domain}-{self.browser}-graph_mathematica.txt", "w")
             f.write( self.graph.toMathematica() )
 
             return False
@@ -1521,20 +1501,20 @@ class Crawler:
         self.inspect_attack(edge)
         self.inspect_tracker(edge)
 
-        if "3" in open("run.flag", "r").read():
+        if "3" in open(f"output/{self.url_domain}-{self.browser}-run.flag", "r").read():
             logging.info("Run set to 3, pause each step")
             input("Crawler in stepping mode, press enter to continue. EDIT run.flag to run")
 
         # Check command
         found_command = False
-        if "get_graph" in open("command.txt", "r").read():
-            f = open("graph.txt", "w+")
+        if "get_graph" in open(f"output/{self.url_domain}-{self.browser}-command.txt", "r").read():
+            f = open(f"output/{self.url_domain}-{self.browser}-graph.txt", "w+")
             f.write(str(self.graph))
             f.close()
             found_command = True
         # Clear commad
         if found_command:
-            open("command.txt", "w+").write("")
+            open(f"output/{self.url_domain}-{self.browser}-command.txt", "w+").write("")
 
         return True
 

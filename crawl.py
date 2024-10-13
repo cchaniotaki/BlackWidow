@@ -1,20 +1,25 @@
 from selenium import webdriver
 from selenium.webdriver.remote.webdriver import WebDriver
-from selenium.webdriver.common.action_chains import ActionChains
-import json
-import pprint
 import argparse
-import networkx as nx
-import matplotlib.pyplot as plt
 import re
-
-
+from selenium.webdriver.firefox.service import Service
+from webdriver_manager.firefox import GeckoDriverManager
+from webdriver_manager.microsoft import EdgeChromiumDriverManager
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.edge.options import Options as EdgeOptions
+from selenium.webdriver.chrome.service import Service as ChromeService
 from Classes import *
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
 
 parser = argparse.ArgumentParser(description='Crawler')
-parser.add_argument("--debug", action='store_true',  help="Dont use path deconstruction and recon scan. Good for testing single URL")
+parser.add_argument("--debug", action='store_true',
+                    help="Dont use path deconstruction and recon scan. Good for testing single URL")
 parser.add_argument("--url", help="Custom URL to crawl")
 parser.add_argument("--crawler", action='store_true', help="Only run the crawler")
+parser.add_argument('--browser', type=str, required=True, help='The browser you want to use (firefox, chrome, or edge)')
 args = parser.parse_args()
 
 
@@ -68,67 +73,86 @@ for f in os.listdir(dynamic_path):
 
 WebDriver.add_script = add_script
 
-# Path to chromedriver, update it accordingly
-chrome_driver_path = "/opt/homebrew/bin/chromedriver"  # Replace with the correct path
+
+def set_up_chrome_driver():
+    # Path to chromedriver, update it accordingly
+    chrome_driver_path = "/opt/homebrew/bin/chromedriver"  # Replace with the correct path
+
+    # launch Chrome
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument("--disable-web-security")
+    chrome_options.add_argument("--disable-xss-auditor")
+
+    # Set up the Chrome driver
+    service = ChromeService(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+
+    # Read scripts and add script which will be executed when the page starts loading
+    ## JS libraries from JaK crawler, with minor improvements
+    driver.add_script(open("js/lib.js", "r").read())
+    driver.add_script(open("js/property_obs.js", "r").read())
+    driver.add_script(open("js/md5.js", "r").read())
+    driver.add_script(open("js/addeventlistener_wrapper.js", "r").read())
+    driver.add_script(open("js/timing_wrapper.js", "r").read())
+    driver.add_script(open("js/window_wrapper.js", "r").read())
+    # Black Widow additions
+    driver.add_script(open("js/forms.js", "r").read())
+    driver.add_script(open("js/xss_xhr.js", "r").read())
+    driver.add_script(open("js/remove_alerts.js", "r").read())
+
+    return driver
 
 
-chrome_options = webdriver.ChromeOptions()
-chrome_options.add_argument("--disable-web-security")
-chrome_options.add_argument("--disable-xss-auditor")
-
-print(args.crawler)
-
-# launch Chrome
-# Set up the Chrome driver
-driver = webdriver.Chrome(executable_path=chrome_driver_path, options=chrome_options)
+def set_up_firefox_driver():
+    # launch Firefox
+    firefox_options = webdriver.FirefoxOptions()
+    firefox_options.add_argument("--disable-web-security")
+    firefox_options.add_argument("--disable-xss-auditor")
 
 
+    # Set up the Frefox driver
+    service = Service(GeckoDriverManager().install())
+    driver = webdriver.Firefox(service=service, options=firefox_options)
 
-#driver.set_window_position(-1700,0)
+    # Wait until a specific element is present to ensure your script has run
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, 'body')))
 
-# Read scripts and add script which will be executed when the page starts loading
-## JS libraries from JaK crawler, with minor improvements
-driver.add_script( open("js/lib.js", "r").read() )
-driver.add_script( open("js/property_obs.js", "r").read() )
-driver.add_script( open("js/md5.js", "r").read() )
-driver.add_script( open("js/addeventlistener_wrapper.js", "r").read() )
-driver.add_script( open("js/timing_wrapper.js", "r").read() )
-driver.add_script( open("js/window_wrapper.js", "r").read() )
-# Black Widow additions
-driver.add_script( open("js/forms.js", "r").read() )
-driver.add_script( open("js/xss_xhr.js", "r").read() )
-driver.add_script( open("js/remove_alerts.js", "r").read() )
+    # Add the extension after starting the session
+    driver.install_addon("/Users/christinechaniotaki/PycharmProjects/SQL/BlackWidow", temporary=True)  # Use temporary=True for a session-specific installation
+
+    return driver
+
+
+def set_up_edge_driver():
+    # edge_options = EdgeOptions()
+    # edge_options.set_capability("--disable-web-security")
+    # edge_options.set_capability("--disable-xss-auditor")
+
+    service = Service(EdgeChromiumDriverManager().install())
+    driver = webdriver.Edge(service=service)
+
+    return driver
+
+
+
+
+if args.browser == 'firefox':
+    driver = set_up_firefox_driver()
+elif args.browser == 'chrome':
+    driver = set_up_chrome_driver()
+else:  # edge
+    driver = set_up_edge_driver()
+
+# driver.set_window_position(-1700,0)
+
+
+
 
 if args.url:
+    browser = args.browser
     url = args.url
-    Crawler(driver, url).start(args.debug, args.crawler)
+    Crawler(driver, url, browser).start(args.debug, args.crawler)
     driver.quit()
-    # visualization of the graph
-    # Read the graph
-    # edges, edge_labels = read_graph_from_file("graph_mathematica.txt")
-    #
-    # # Create a directed graph
-    # G = nx.DiGraph()
-    #
-    # # Add edges to the graph
-    # G.add_edges_from(edges)
-    #
-    # # Draw the graph
-    # pos = nx.spring_layout(G)  # positions for all nodes
-    # nx.draw(G, pos, with_labels=True, arrows=True, node_size=2000, node_color='lightblue', font_size=10,
-    #         font_weight='bold')
-    #
-    # # Draw edge labels
-    # nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
-    #
-    # # Show the plot
-    # plt.title("Wikipedia Interaction Graph")
-    # plt.show()
-
 
 else:
     print("Please use --url")
-
-
-
-

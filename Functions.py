@@ -1,33 +1,21 @@
 # Functions.py contains general purpose functions can be utilized by
 # the crawler.
 
-from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
-from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import StaleElementReferenceException, TimeoutException, UnexpectedAlertPresentException, NoSuchFrameException, NoAlertPresentException, ElementNotVisibleException, InvalidElementStateException
 from urllib.parse import urlparse, urljoin
 import json
-import pprint
-import datetime
-import tldextract
-import math
 import os
 import traceback
-import random
-import re
 import logging
 import copy
-import time
 import operator
 
 import Classes
-from extractors.Events import extract_events
 from extractors.Forms import extract_forms, parse_form
-from extractors.Urls import extract_urls
-from extractors.Iframes import extract_iframes
 
 
 # From: https://stackoverflow.com/a/47298910
@@ -91,6 +79,7 @@ def find_state(driver, graph, edge):
         logging.info("find_state method %s" % method)
 
         if allow_edge(graph, edge_in_path):
+            print("EDPPPPP", path)
             if method == "get":
                 driver.get(edge_in_path.n2.value.url)
             elif method == "form":
