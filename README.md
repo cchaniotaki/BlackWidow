@@ -32,3 +32,11 @@ PATH=$PATH:.
 python3 crawl.py --url https://wikipedia.org
 
 
+
+python3 crawl.py --url https://wikipedia.org --crawler --browser chrome 
+python3 crawl.py --url https://www.costco.com --crawler --browser chrome 
+python3 crawl.py --url https://www.target.com --crawler --browser chrome 
+python3 crawl.py --url https://www.cnn.com --crawler --browser chrome 
+python3 crawl.py --url https://usc.edu --crawler --browser chrome 
+
+

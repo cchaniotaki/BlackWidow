@@ -500,7 +500,6 @@ class Crawler:
 
         random.seed( 6 ) # chosen by fair dice roll
 
-
         still_work = True
         while still_work:
             print("-"*50)

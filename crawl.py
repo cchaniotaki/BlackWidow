@@ -12,8 +12,6 @@ from Classes import *
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-
-
 parser = argparse.ArgumentParser(description='Crawler')
 parser.add_argument("--debug", action='store_true',
                     help="Dont use path deconstruction and recon scan. Good for testing single URL")
