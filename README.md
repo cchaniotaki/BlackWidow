@@ -1,5 +1,7 @@
 # Black Widow - Blackbox Data-driven Web Scanning
 
+
+
 ## Running Black Widow
 
 loipon afou to katebasa, arxika as ftiaksoume ena venv. 
@@ -32,11 +34,19 @@ PATH=$PATH:.
 python3 crawl.py --url https://wikipedia.org
 
 
+allages pou ekana gia firefox kai edge
 
+tha xreiastei na allakso ta javascript. gia na paizoun gia firefox kai edge
+
+arxika etreksa ta parakato site na exo output prin kano allages gia na ta sugkrino me to meta na do oti einai ola ok.
+to output prin einai apothikeumeno sto output-before-changes
 python3 crawl.py --url https://wikipedia.org --crawler --browser chrome 
-python3 crawl.py --url https://www.costco.com --crawler --browser chrome 
-python3 crawl.py --url https://www.target.com --crawler --browser chrome 
-python3 crawl.py --url https://www.cnn.com --crawler --browser chrome 
 python3 crawl.py --url https://usc.edu --crawler --browser chrome 
+python3 crawl.py --url https://www.cnn.com --crawler --browser chrome 
+python3 crawl.py --url https://www.target.com --crawler --browser chrome 
+python3 crawl.py --url https://www.costco.com --crawler --browser chrome 
+
+
+
 
 

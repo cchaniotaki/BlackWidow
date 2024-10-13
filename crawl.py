@@ -150,7 +150,10 @@ if args.url:
     browser = args.browser
     url = args.url
     Crawler(driver, url, browser).start(args.debug, args.crawler)
+
+    driver.close()
     driver.quit()
+
 
 else:
     print("Please use --url")
