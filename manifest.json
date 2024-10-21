@@ -1,0 +1,33 @@
+{
+  "manifest_version": 2,
+  "name": "JS Injector",
+  "version": "1.0",
+  "description": "Injects custom JavaScript into every page at document_start.",
+  "permissions": [
+    "activeTab",
+    "<all_urls>",
+    "storage"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "js/lib.js",
+        "js/property_obs.js",
+        "js/md5.js",
+        "js/addeventlistener_wrapper.js",
+        "js/timing_wrapper.js",
+        "js/window_wrapper.js",
+        "js/forms.js",
+        "js/xss_xhr.js",
+        "js/remove_alerts.js",
+        "js/ajax_interceptor.js",
+        "js/ajax_observer.js",
+        "js/test.js"
+      ],
+      "run_at": "document_start"
+    }
+  ]
+}

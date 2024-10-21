@@ -1,22 +1,9 @@
-from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
-from selenium.webdriver.remote.webdriver import WebDriver
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.common.exceptions import StaleElementReferenceException, TimeoutException, UnexpectedAlertPresentException, NoSuchFrameException, NoAlertPresentException, ElementNotVisibleException, InvalidElementStateException
-from urllib.parse import urlparse, urljoin
+from selenium.common.exceptions import StaleElementReferenceException
 import json
-import pprint
-import datetime
-import tldextract
-import math
-import os
 import traceback
-import random
-import re
 import logging
-import copy
-import time
 
 import Classes
 from Utils import is_same_page
