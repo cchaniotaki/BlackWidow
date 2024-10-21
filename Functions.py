@@ -24,6 +24,7 @@ import time
 import operator
 
 import Classes
+from Utils import is_same_page
 from extractors.Events import extract_events
 from extractors.Forms import extract_forms, parse_form
 from extractors.Urls import extract_urls
@@ -82,7 +83,7 @@ def dom_depth(edge):
     return depth
 
 # Execute the path necessary to reach the state
-def find_state(driver, graph, edge):
+def find_state(original_url, driver, graph, edge):
     path = rec_find_path(graph, edge)
 
     for edge_in_path in path:
@@ -92,11 +93,14 @@ def find_state(driver, graph, edge):
 
         if allow_edge(graph, edge_in_path):
             if method == "get":
-                driver.get(edge_in_path.n2.value.url)
+                logging.info("find state compare urls " + original_url + " " + edge_in_path.n2.value.url)
+                print("compare urls: ", original_url, edge_in_path.n2.value.url)
+                if is_same_page(original_url, edge_in_path.n2.value.url):
+                    driver.get(edge_in_path.n2.value.url)
             elif method == "form":
                 form = method_data
                 try:
-                    form_fill(driver, form)
+                    form_fill(original_url, driver, form)
                 except Exception as e:
                     print(e)
                     print(traceback.format_exc())
@@ -105,7 +109,7 @@ def find_state(driver, graph, edge):
             elif method == "ui_form":
                 ui_form = method_data
                 try:
-                    ui_form_fill(driver, ui_form)
+                    ui_form_fill(original_url, driver, ui_form)
                 except Exception as e:
                     print(e)
                     print(traceback.format_exc())
@@ -113,7 +117,7 @@ def find_state(driver, graph, edge):
                     return False
             elif method == "event":
                 event = method_data
-                execute_event(driver, event)
+                execute_event(original_url, driver, event)
                 remove_alerts(driver)
             elif method == "iframe":
                 enter_status = enter_iframe(driver, method_data)
@@ -202,46 +206,51 @@ def check_edge(driver, graph, edge):
 
 
 
-
-def follow_edge(driver, graph, edge):
-
-    logging.info("Follow edge: " + str(edge) )
+def follow_edge(original_url, driver, graph, edge):
+    logging.info("Follow edge: " + str(edge))
     method = edge.value.method
     method_data = edge.value.method_data
     if method == "get":
-        driver.get(edge.n2.value.url)
+        logging.info("compare urls: " + str(original_url) + " " + str(edge.n2.value.url))
+        print("compare urls: ", original_url, edge.n2.value.url)
+        if is_same_page(original_url, edge.n2.value.url):
+            driver.get(edge.n2.value.url)
+        else:
+            logging.info("Urls are not from the same webpage. ignore...")
+            edge.visited = True
+            return None
     elif method == "form":
         logging.info("Form, do find_state")
-        if not find_state(driver, graph, edge):
+        if not find_state(original_url, driver, graph, edge):
             logging.warning("Could not find state %s" % str(edge))
             edge.visited = True
             return None
     elif method == "event":
         logging.info("Event, do find_state")
-        if not find_state(driver, graph, edge):
+        if not find_state(original_url, driver, graph, edge):
             logging.warning("Could not find state %s" % str(edge))
             edge.visited = True
             return None
     elif method == "iframe":
         logging.info("iframe, do find_state")
-        if not find_state(driver, graph, edge):
+        if not find_state(original_url, driver, graph, edge):
             logging.warning("Could not find state %s" % str(edge))
             edge.visited = True
             return None
     elif method == "javascript":
         logging.info("Javascript, do find_state")
-        if not find_state(driver, graph, edge):
+        if not find_state(original_url, driver, graph, edge):
             logging.warning("Could not find state %s" % str(edge))
             edge.visited = True
             return None
     elif method == "ui_form":
         logging.info("ui_form, do find_state")
-        if not find_state(driver, graph, edge):
+        if not find_state(original_url, driver, graph, edge):
             logging.warning("Could not find state %s" % str(edge))
             edge.visited = True
             return None
     else:
-        raise Exception( "Can't handle method (%s) in next_unvisited_edge " % method )
+        raise Exception("Can't handle method (%s) in next_unvisited_edge " % method)
 
     # Success
     return True
@@ -310,12 +319,9 @@ def allow_edge(graph, edge):
         return False
 
 
-
-
-
-
-def execute_event(driver, do):
-    logging.info("We need to trigger [" +  do.event + "] on " + do.addr)
+def execute_event(original_url, driver, do):
+    logging.info("We need to trigger [" + do.event + "] on " + do.addr)
+    print("We need to trigger [" + do.event + "] on " + do.addr)
 
     do.addr = xpath_row_to_cell(do.addr)
 
@@ -323,16 +329,20 @@ def execute_event(driver, do):
         if   do.event == "onclick" or do.event == "click":
             web_element =  driver.find_element(By.XPATH, do.addr)
             logging.info("Click on %s" % web_element )
-
-            if web_element.is_displayed():
-                web_element.click()
-            else:
-                logging.warning("Trying to click on invisible element. Use JavaScript")
-                driver.execute_script("arguments[0].click()", web_element)
+            print("Click on %s" % web_element.get_attribute)
+            href_value = web_element.get_attribute('href')
+            if href_value is None or is_same_page(original_url, href_value):
+                if web_element.is_displayed():
+                    web_element.click()
+                else:
+                    logging.warning("Trying to click on invisible element. Use JavaScript")
+                    driver.execute_script("arguments[0].click()", web_element)
         elif do.event == "ondblclick" or do.event == "dblclick":
             web_element =  driver.find_element(By.XPATH,do.addr)
-            logging.info("Double click on %s" % web_element )
-            ActionChains(driver).double_click(web_element).perform()
+            href_value = web_element.get_attribute('href')
+            if href_value is None or is_same_page(original_url, href_value):
+                logging.info("Double click on %s" % web_element )
+                ActionChains(driver).double_click(web_element).perform()
         elif do.event == "onmouseout":
             logging.info("Mouseout on %s" %  driver.find_element(By.XPATH,do.addr) )
             driver.find_element(By.XPATH,do.addr).click()
@@ -359,18 +369,24 @@ def execute_event(driver, do):
                 # options
                 opts = el.find_elements(By.TAG_NAME, "option")
                 for opt in opts:
-                    try:
-                        opt.click()
-                    except UnexpectedAlertPresentException:
-                        print("Alert detected")
-                        alert = driver.switch_to.alert
-                        alert.dismiss()
+                    url = opt.get_attribute('href')
+                    print(url)
+                    if url is None or is_same_page(original_url, url):
+                        try:
+                            opt.click()
+                        except UnexpectedAlertPresentException:
+                            print("Alert detected")
+                            alert = driver.switch_to.alert
+                            alert.dismiss()
             else:
                 # If ot a <select> we try to write
                 el = driver.find_element(By.XPATH,do.addr)
-                el.clear()
-                el.send_keys("jAEkPot")
-                el.send_keys(Keys.RETURN)
+                url = el.get_attribute('href')
+                print(url)
+                if url is None or is_same_page(original_url, url):
+                    el.clear()
+                    el.send_keys("jAEkPot")
+                    el.send_keys(Keys.RETURN)
         elif  do.event == "input" or do.event == "oninput":
             el = driver.find_element(By.XPATH,do.addr)
             el.clear()
@@ -380,10 +396,13 @@ def execute_event(driver, do):
 
         elif  do.event == "compositionstart":
             el = driver.find_element(By.XPATH,do.addr)
-            el.clear()
-            el.send_keys("jAEkPot")
-            el.send_keys(Keys.RETURN)
-            logging.info("Composition Start %s" %  driver.find_element(By.XPATH,do.addr) )
+            url = el.get_attribute('href')
+            print(url)
+            if url is None or is_same_page(original_url, url):
+                el.clear()
+                el.send_keys("jAEkPot")
+                el.send_keys(Keys.RETURN)
+                logging.info("Composition Start %s" %  driver.find_element(By.XPATH,do.addr) )
 
         else:
             logging.warning("Warning Unhandled event %s " % str(do.event) )
@@ -433,8 +452,9 @@ def update_value_with_js(driver, web_element, new_value):
         logging.error(traceback.format_exc())
         logging.error("faild to update with JS " + str(web_element)  )
 
-def form_fill(driver, target_form):
-    logging.debug("Filling "+ str(target_form))
+
+def form_fill(original_url,driver, target_form):
+    logging.debug("Filling " + str(target_form))
 
     # Ensure we don't have any alerts before filling in form
     try:
@@ -528,7 +548,12 @@ def form_fill(driver, target_form):
                         if i.override_value:
                             update_value_with_js(driver, iel, i.override_value)
                         if i.click:
-                            iel.click()
+                            print(i)
+                            print(iel)
+                            url = iel.get_attribute('href')
+                            print(url)
+                            if url is None or is_same_page(original_url, url):
+                                iel.click()
                     elif iel.get_attribute("type") == "checkbox":
                         if i.override_value:
                             update_value_with_js(driver, iel, i.override_value)
@@ -593,7 +618,11 @@ def form_fill(driver, target_form):
                     for option in options:
                         if option.get_attribute("value") == i.selected:
                             try:
-                                option.click()
+                                print(option)
+                                url = option.get_attribute('href')
+                                print(url)
+                                if url is None or is_same_page(original_url, url):
+                                    option.click()
                             except Exception as e:
                                 logging.error("Could not click on " + str(form_select) + ", trying JS")
                                 update_value_with_js(driver, select, i.selected)
@@ -656,7 +685,11 @@ def form_fill(driver, target_form):
 
                 if form_submit.use:
                     try:
-                        selenium_submit.click()
+                        print(selenium_submit)
+                        url = selenium_submit.get_attribute('href')
+                        print(url)
+                        if url is None or is_same_page(original_url, url):
+                            selenium_submit.click()
                         break
                     except ElementNotVisibleException as e:
                         logging.warning("Cannot click on invisible submit button: " + str(submit_button) + str(target_form) + " trying JavaScript click")
@@ -706,8 +739,8 @@ def form_fill(driver, target_form):
     #raise Exception("error no form found (url:%s, form:%s)" % (driver.current_url, target_form) )
 
 
-def ui_form_fill(driver, target_form):
-    logging.debug("Filling ui_form "+ str(target_form))
+def ui_form_fill(original_url, driver, target_form):
+    logging.debug("Filling ui_form " + str(target_form))
 
     # Ensure we don't have any alerts before filling in form
     try:
@@ -742,9 +775,12 @@ def ui_form_fill(driver, target_form):
                 logging.error(traceback.format_exc())
                 logging.error("[inputs] also faild with JS " + str(web_element)  )
 
-
-    submit_element =  driver.find_element(By.XPATH,target_form.submit)
-    submit_element.click()
+    submit_element = driver.find_element(By.XPATH, target_form.submit)
+    print(submit_element)
+    url = submit_element.get_attribute('href')
+    print(url)
+    if url is None or is_same_page(original_url, url):
+        submit_element.click()
 
 def set_standard_values(old_form):
     form = copy.deepcopy(old_form)
@@ -876,8 +912,8 @@ def enter_iframe(driver, target_frame):
             return False
     return False
 
-def find_login_form(driver, graph, early_state=False):
-    forms = extract_forms(driver)
+def find_login_form(original_url, driver, graph, early_state=False):
+    forms = extract_forms(original_url, driver)
     for form in forms:
         for form_input in form.inputs:
             if form_input.itype == "password":

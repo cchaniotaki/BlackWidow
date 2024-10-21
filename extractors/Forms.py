@@ -19,6 +19,7 @@ import copy
 import time
 
 import Classes
+from Utils import is_same_page
 
 
 def parse_form(el, driver):
@@ -155,12 +156,21 @@ def parse_form(el, driver):
 
 
 # Search for <form>
-def extract_forms(driver):
-    elem = driver.find_elements(By.TAG_NAME,"form")
+def extract_forms(original_url, driver):
+    elem = driver.find_elements(By.TAG_NAME, "form")
 
     forms = set()
     for el in elem:
-        forms.add( parse_form(el, driver) )
+        form = parse_form(el, driver)
+        if form.action and form.action.find("http") >= 0 and is_same_page(original_url, form.action):
+            logging.info("extract forms compare urls " + original_url + " " + form.action)
+            print("extract forms compare urls: ", original_url, form.action)
+            # input("perimene, form")
+            forms.add(parse_form(el, driver))
+        elif form.action.find("http") < 0:
+            print(form)
+            input("den einai http perimene, form ")
+            forms.add(parse_form(el, driver))
     return forms
 
 
