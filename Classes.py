@@ -141,7 +141,6 @@ class Graph:
         return edge
 
     def connect(self, v1, v2, value, parent=None):
-        # print("[connect]",v1,v2,value)
         n1 = self.Node(v1)
         n2 = self.Node(v2)
         edge = self.Edge(n1, n2, value, parent)
@@ -149,7 +148,6 @@ class Graph:
         p1 = n1 in self.nodes
         p2 = n2 in self.nodes
         p3 = not (edge in self.edges)
-        # print(p1,p2,p3)
         if (p1 and p2 and p3):
             self.edges.append(edge)
             return True
@@ -576,11 +574,6 @@ class Crawler:
                 print(str(n_gets).ljust(7), "|", str(n_forms).ljust(6), "|", n_events)
                 print("----------------------")
 
-                # for edge in self.graph.edges:
-                #     if edge.visited == False and edge.value.method=="get":
-                #         print(edge)
-                # input()
-
                 try:
                     still_work = self.rec_crawl()
                 except Exception as e:
@@ -594,13 +587,9 @@ class Crawler:
 
             except KeyboardInterrupt:
                 print("CTRL-C, abort mission")
-                # print(self.graph.toMathematica())
                 break
 
         print("Done crawling")
-        # if (crawler_mode == False): we dont want attacks
-        #     print("Start Attacking")
-        #     self.attack()
 
     def extract_vectors(self):
         print("Extracting urls")
@@ -727,7 +716,6 @@ class Crawler:
 
     def reflected_payload(self, lookup_id, location):
         if str(lookup_id) in self.attack_lookup_table:
-            # self.attack_lookup_table[str(lookup_id)]["reflected"].append((self.driver.current_url, location))
             self.attack_lookup_table[str(lookup_id)]["reflected"].add((self.driver.current_url, location))
         else:
             logging.warning("Could not find lookup_id %s, perhaps from an older attack session?" % lookup_id)
@@ -798,24 +786,6 @@ class Crawler:
         self.io_graph[tracker] = {"injected": vector_with_payload,
                                   "reflected": set()}
 
-    def inspect_tracker(self, vector_edge):
-        try:
-            body_text = self.driver.find_element(By.TAG_NAME, "body").text
-
-            for tracker in self.io_graph:
-                if tracker in body_text:
-                    self.io_graph[tracker]['reflected'].add(vector_edge)
-                    print("Found from tracker! " + str(vector_edge))
-                    logging.info("Found from tracker! " + str(vector_edge))
-                    # print(self.io_graph[tracker])
-
-                    prev_edge = self.io_graph[tracker]['injected'][0]
-                    attackable = prev_edge.value.method_data.attackable()
-                    if attackable:
-                        self.path_attack_form(self.driver, prev_edge, vector_edge)
-        except:
-            print("Failed to find tracker in body_text")
-
     def track_form(self, driver, vector_edge):
         successful_xss = set()
 
@@ -838,54 +808,6 @@ class Crawler:
                     self.use_tracker(tracker, (form_edge, parameter, tracker))
 
         self.execute_path(driver, path)
-
-        # Inspect
-        inspect_tracker = self.inspect_tracker(vector_edge)
-
-        return successful_xss
-
-    def path_attack_form(self, driver, vector_edge, check_edge=None):
-
-        logging.info("ATTACKING VECTOR_EDGE: " + str(vector_edge))
-        successful_xss = set()
-
-        graph = self.graph
-        path = rec_find_path(graph, vector_edge)
-
-        logging.info("PATH LENGTH: " + str(len(path)))
-        forms = []
-        for edge in path:
-            if edge.value.method == "form":
-                forms.append(edge.value.method_data)
-
-        # Safe fix form
-        payloads = self.get_payloads()
-        for payload_template in payloads:
-            for form in forms:
-                form = self.fix_form(form, payload_template, True)
-
-            execute_result = self.execute_path(driver, path)
-            if not execute_result:
-                logging.warning("Early break attack on " + str(vector_edge))
-                return False
-            if check_edge:
-                logging.info("check_edge defined from tracker " + str(check_edge))
-                # input("Classes 1035 " + self.url)
-                follow_edge(self.url, driver, graph, check_edge)
-
-        # Aggressive fix form
-        payloads = self.get_payloads()
-        for payload_template in payloads:
-            for form in forms:
-                form = self.fix_form(form, payload_template, False)
-            self.execute_path(driver, path)
-            if not execute_result:
-                logging.warning("Early break attack on " + str(vector_edge))
-                return False
-            if check_edge:
-                logging.info("check_edge defined from tracker " + str(check_edge))
-                # input("Classes 1054 " + self.url)
-                follow_edge(self.url, driver, graph, check_edge)
 
         return successful_xss
 
@@ -949,14 +871,10 @@ class Crawler:
             if prev_edge.value.method == "form":
 
                 prev_form = prev_edge.value.method_data
-                # print(prev_form)
-                # print(prev_form.__hash__())
-                # print("FORM TO DO: ")
                 if not (prev_form in self.attacked_forms):
                     print("prev was form, ATTACK")
                     logging.info("prev was form, ATTACK, " + str(prev_form))
                     # TODO should we skip attacking some elements?
-                    self.path_attack_form(driver, prev_edge)
                     if not prev_form in self.attacked_forms:
                         self.attacked_forms[prev_form] = 0
                     self.attacked_forms[prev_form] += 1
@@ -966,12 +884,6 @@ class Crawler:
                     self.track_form(driver, prev_edge)
                 else:
                     logging.warning("Form already done! " + str(prev_form) + str(prev_form.inputs))
-
-
-            elif prev_edge.value.method == "ui_form":
-                print("Prev was ui_form, ATTACK")
-                logging.info("Prev was ui_form, ATTACK")
-                self.attack_ui_form(driver, prev_edge)
             else:
                 self.events_in_row = 0
 
@@ -1220,7 +1132,6 @@ class Crawler:
 
         # Check for successful attacks
         time.sleep(0.1)
-        self.inspect_tracker(edge)
 
         if "3" in open(f"output/{self.url_domain}-{self.browser}-run.flag", "r").read():
             logging.info("Run set to 3, pause each step")

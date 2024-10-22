@@ -382,7 +382,6 @@ def execute_event(original_url, driver, do):
                 # If ot a <select> we try to write
                 el = driver.find_element(By.XPATH,do.addr)
                 url = el.get_attribute('href')
-                print(url)
                 if url is None or is_same_page(original_url, url):
                     el.clear()
                     el.send_keys("jAEkPot")
@@ -397,7 +396,6 @@ def execute_event(original_url, driver, do):
         elif  do.event == "compositionstart":
             el = driver.find_element(By.XPATH,do.addr)
             url = el.get_attribute('href')
-            print(url)
             if url is None or is_same_page(original_url, url):
                 el.clear()
                 el.send_keys("jAEkPot")
@@ -548,10 +546,7 @@ def form_fill(original_url,driver, target_form):
                         if i.override_value:
                             update_value_with_js(driver, iel, i.override_value)
                         if i.click:
-                            print(i)
-                            print(iel)
                             url = iel.get_attribute('href')
-                            print(url)
                             if url is None or is_same_page(original_url, url):
                                 iel.click()
                     elif iel.get_attribute("type") == "checkbox":
@@ -618,9 +613,7 @@ def form_fill(original_url,driver, target_form):
                     for option in options:
                         if option.get_attribute("value") == i.selected:
                             try:
-                                print(option)
                                 url = option.get_attribute('href')
-                                print(url)
                                 if url is None or is_same_page(original_url, url):
                                     option.click()
                             except Exception as e:
@@ -685,9 +678,7 @@ def form_fill(original_url,driver, target_form):
 
                 if form_submit.use:
                     try:
-                        print(selenium_submit)
                         url = selenium_submit.get_attribute('href')
-                        print(url)
                         if url is None or is_same_page(original_url, url):
                             selenium_submit.click()
                         break
@@ -776,9 +767,7 @@ def ui_form_fill(original_url, driver, target_form):
                 logging.error("[inputs] also faild with JS " + str(web_element)  )
 
     submit_element = driver.find_element(By.XPATH, target_form.submit)
-    print(submit_element)
     url = submit_element.get_attribute('href')
-    print(url)
     if url is None or is_same_page(original_url, url):
         submit_element.click()
 

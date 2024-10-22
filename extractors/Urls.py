@@ -76,14 +76,10 @@ def extract_urls(driver):
         try:
 
             if el.get_attribute("http-equiv") and el.get_attribute("content"):
-                # print(el.get_attribute("http-equiv"))
-                # print(el.get_attribute("content"))
                 if el.get_attribute("http-equiv").lower() == "refresh":
                     m = re.search("url=(.*)", el.get_attribute("content"), re.IGNORECASE)
                     fresh_url = m.group(1)
-                    # print(fresh_url)
                     full_fresh_url = urljoin(driver.current_url, fresh_url)
-                    # print(full_fresh_url)
 
                     urls.add(url_to_request(full_fresh_url))
 

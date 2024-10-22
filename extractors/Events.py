@@ -92,9 +92,6 @@ def extract_events(driver):
     resps = extract_inputs(driver)
     todo += resps
 
-    # for do in todo:
-    #    print(do)
-
     events = set()
     for do in todo:
         event = Classes.Event(do['function_id'],

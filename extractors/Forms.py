@@ -44,10 +44,7 @@ def parse_form(el, driver):
         inputs = []
         logging.warning("No inputs founds during parse, falling back to JavaScript")
         resps = driver.execute_script("return get_forms()")
-        # print("No inputs, looking at js")
-        # print("Looking for inputs to the form with action ", form.action)
         js_forms = json.loads(resps)
-        # print(js_forms)
         for js_form in js_forms:
             current_form = Classes.Form()
             current_form.method = js_form['method'];
@@ -58,7 +55,6 @@ def parse_form(el, driver):
             if( current_form.method == form.method and current_form.action == form.action ):
                 for js_el in js_form['elements']:
                     web_el = driver.find_element(By.XPATH,js_el['xpath'])
-                    # print("Adding js form input", js_el, web_el)
                     inputs.append(web_el)
                 break
 
@@ -136,9 +132,6 @@ def parse_form(el, driver):
 
         driver.switch_to.default_content();
 
-    # print("Finally adding form: ", form)
-    # for inputs in form.inputs:
-    #     print("--", inputs)
     return form
 
 
@@ -152,11 +145,8 @@ def extract_forms(original_url, driver):
         if form.action and form.action.find("http") >= 0 and is_same_page(original_url, form.action):
             logging.info("extract forms compare urls " + original_url + " " + form.action)
             print("extract forms compare urls: ", original_url, form.action)
-            # input("perimene, form")
             forms.add(parse_form(el, driver))
         elif form.action.find("http") < 0:
-            print(form)
-            input("den einai http perimene, form ")
             forms.add(parse_form(el, driver))
     return forms
 
