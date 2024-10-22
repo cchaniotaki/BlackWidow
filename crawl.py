@@ -18,7 +18,6 @@ parser = argparse.ArgumentParser(description='Crawler')
 parser.add_argument("--debug", action='store_true',
                     help="Dont use path deconstruction and recon scan. Good for testing single URL")
 parser.add_argument("--url", help="Custom URL to crawl")
-parser.add_argument("--crawler", action='store_true', help="Only run the crawler")
 parser.add_argument('--browser', type=str, required=True, help='The browser you want to use (firefox, chrome, or edge)')
 args = parser.parse_args()
 
@@ -75,9 +74,6 @@ WebDriver.add_script = add_script
 
 
 def set_up_chrome_driver():
-    # Path to chromedriver, update it accordingly
-    chrome_driver_path = "/opt/homebrew/bin/chromedriver"  # Replace with the correct path
-
     # launch Chrome
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument("--disable-web-security")
@@ -151,7 +147,7 @@ else:  # edge
 if args.url:
     browser = args.browser
     url = args.url
-    Crawler(driver, url, browser).start(args.debug, args.crawler)
+    Crawler(driver, url, browser).start(args.debug)
     driver.quit()
 
 else:

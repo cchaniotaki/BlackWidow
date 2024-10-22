@@ -636,129 +636,6 @@ class Crawler:
 
         return vectors
 
-    def attack_404(self, driver, attack_lookup_table):
-
-        successful_xss = set()
-
-        # TODO make global somehow or better
-        # %RAND will be replaced, useful for tracking
-        alert_text = "jaekpot%RAND"
-        xss_payloads = ["<script>xss('" + alert_text + "')</script>",
-                        'x" onerror="xss(\'' + alert_text + '\')"']
-
-        for payload_template in xss_payloads:
-            random_id = random.randint(1, 10000000)
-            random_id_padded = "[" + str(random_id) + "]"
-            payload = payload_template.replace("%RAND", random_id_padded)
-            lookup_id = alert_text.replace("%RAND", random_id_padded)
-
-            attack_lookup_table[lookup_id] = (self.url, "404", payload)
-
-            purl = urlparse(self.url)
-            parts = purl.path.split("/")
-            parts[-1] = payload
-            purl = purl._replace(path="/".join(parts))
-            attack_vector = purl.geturl()
-
-            driver.get(attack_vector)
-
-            # Inspect
-            successful_xss = successful_xss.union(self.inspect_attack(url))
-
-        return successful_xss
-
-    def attack_event(self, driver, vector_edge):
-
-        print("-" * 50)
-        successful_xss = set()
-
-        xss_payloads = self.get_payloads()
-
-        print("Will try to attack vector", vector_edge)
-        for payload_template in xss_payloads:
-            (lookup_id, payload) = self.arm_payload(payload_template)
-            # Arm the payload
-            event = vector_edge.value.method_data
-
-            self.use_payload(lookup_id, (vector_edge, event.event, payload))
-
-            # Launch!
-            # input("Classes 670 " + self.url)
-            follow_edge(self.url, driver, self.graph, vector_edge)
-
-            try:
-                if event.event == "oninput" or event.event == "input":
-                    el = driver.find_element(By.XPATH, event.addr)
-                    el.clear()
-                    el.send_keys(payload)
-                    el.send_keys(Keys.RETURN)
-                    logging.info("oninput %s" % driver.find_element(By.XPATH, event.addr))
-                if event.event == "oncompositionstart" or event.event == "compositionstart":
-                    el = driver.find_element(By.XPATH, event.addr)
-                    el.click()
-                    el.clear()
-                    el.send_keys(payload)
-                    el.send_keys(Keys.RETURN)
-                    logging.info("oncompositionstart %s" % driver.find_element(By.XPATH, event.addr))
-
-                else:
-                    logging.error("Could not attack event.event %s" % event.event)
-            except:
-                print("PROBLEM ATTACKING EVENT: ", event)
-                logging.error("Can't attack event " + str(event))
-
-            # Inspect
-            inspect_result = self.inspect_attack(vector_edge)
-            if inspect_result:
-                successful_xss = successful_xss.union()
-                logging.info("Found injection, don't test all")
-                break
-
-        return successful_xss
-
-    def attack_get(self, driver, vector):
-
-        successful_xss = set()
-
-        xss_payloads = self.get_payloads()
-
-        purl = urlparse(vector)
-        print(purl)
-        for parameter in purl.query.split("&"):
-            if parameter:
-                for payload_template in xss_payloads:
-
-                    (lookup_id, payload) = self.arm_payload(payload_template)
-
-                    # Look for ?a=b&c=d
-                    if "=" in parameter:
-                        # Only split on first to allow ?a=b=C => (a, b=c)
-                        (key, value) = parameter.split("=", 1)
-                    # Singleton parameters ?x&y&z
-                    else:
-                        (key, value) = (parameter, "")
-
-                    value = payload
-
-                    self.use_payload(lookup_id, (vector, key, payload))
-
-                    attack_query = purl.query.replace(parameter, key + "=" + value)
-                    # print("--Attack query: ", attack_query)
-
-                    attack_vector = vector.replace(purl.query, attack_query)
-                    print("--Attack vector: ", attack_vector)
-
-                    driver.get(attack_vector)
-
-                    # Inspect
-                    inspect_result = self.inspect_attack(vector)
-                    if inspect_result:
-                        successful_xss = successful_xss.union()
-                        logging.info("Found injection, don't test all")
-                        break
-
-        return successful_xss
-
     def xss_find_state(self, driver, edge):
         graph = self.graph
         path = rec_find_path(graph, edge)
@@ -847,40 +724,6 @@ class Crawler:
         self.attack_lookup_table[str(lookup_id)] = {"injected": vector_with_payload,
                                                     "reflected": set()}
 
-    # Checks for successful injections
-    def inspect_attack(self, vector_edge):
-        successful_xss = set()
-
-        # attribute injections
-        attribute_injects = self.driver.find_elements(By.XPATH, "//*[@jaekpot-attribute]")
-        for attribute in attribute_injects:
-            lookup_id = attribute.get_attribute("jaekpot-attribute")
-            successful_xss.add(lookup_id)
-            self.reflected_payload(lookup_id, vector_edge)
-
-        xsses_json = self.driver.execute_script("return JSON.stringify(xss_array)")
-        lookup_ids = json.loads(xsses_json)
-
-        for lookup_id in lookup_ids:
-            successful_xss.add(lookup_id)
-            self.reflected_payload(lookup_id, vector_edge)
-
-        # Save successful attacks to file
-        if successful_xss:
-            f = open(f"output/{self.url_domain}-{self.browser}-successful_injections-" + self.session_id + ".txt", "a+")
-            for xss in successful_xss:
-                attack_entry = self.get_table_entry(xss)
-                if attack_entry:
-                    print("-" * 50)
-                    print("Found vulnerability: ", attack_entry)
-                    print("-" * 50)
-                    # f.write( str(attack_entry)  + "\n")
-                    simple_entry = {'reflected': str(attack_entry['reflected']),
-                                    'injected': str(attack_entry['injected'])}
-
-                    f.write(json.dumps(simple_entry) + "\n")
-
-        return successful_xss
 
     def reflected_payload(self, lookup_id, location):
         if str(lookup_id) in self.attack_lookup_table:
@@ -909,7 +752,6 @@ class Crawler:
             if method == "get":
                 if allow_edge(graph, edge_in_path):
                     driver.get(edge_in_path.n2.value.url)
-                    self.inspect_attack(edge_in_path)
                 else:
                     logging.warning("Not allowed to get: " + str(edge_in_path.n2.value.url))
                     return False
@@ -917,7 +759,6 @@ class Crawler:
                 form = method_data
                 try:
                     fill_result = form_fill(driver, form)
-                    self.inspect_attack(edge_in_path)
                     if not fill_result:
                         logging.warning("Failed to fill form:" + str(form))
                         return False
@@ -928,24 +769,20 @@ class Crawler:
                     return False
             elif method == "event":
                 event = method_data
-                # input("Classes 931" + self.url)
                 execute_event(self.url, driver, event)
                 remove_alerts(driver)
-                self.inspect_attack(edge_in_path)
             elif method == "iframe":
                 logging.info("iframe, do find_state")
                 if not find_state(self.url, driver, graph, edge_in_path):
                     logging.warning("Could not enter iframe" + str(edge_in_path))
                     return False
 
-                self.inspect_attack(edge_in_path)
             elif method == "javascript":
                 # The javascript code is stored in the to-node
                 # "[11:]" gives everything after "javascript:"
                 js_code = edge_in_path.n2.value.url[11:]
                 try:
                     driver.execute_script(js_code)
-                    self.inspect_attack(edge_in_path)
                 except Exception as e:
                     print(e)
                     print(traceback.format_exc())
@@ -1035,11 +872,6 @@ class Crawler:
                 logging.info("check_edge defined from tracker " + str(check_edge))
                 # input("Classes 1035 " + self.url)
                 follow_edge(self.url, driver, graph, check_edge)
-            # Inspect
-            inspect_result = self.inspect_attack(vector_edge)
-            if inspect_result:
-                print("Found one, quit..")
-                return successful_xss
 
         # Aggressive fix form
         payloads = self.get_payloads()
@@ -1054,143 +886,10 @@ class Crawler:
                 logging.info("check_edge defined from tracker " + str(check_edge))
                 # input("Classes 1054 " + self.url)
                 follow_edge(self.url, driver, graph, check_edge)
-            # Inspect
-            inspect_result = self.inspect_attack(vector_edge)
-            if inspect_result:
-                print("Found one, quit..")
-                return successful_xss
 
         return successful_xss
 
-    def attack_ui_form(self, driver, vector_edge):
 
-        successful_xss = set()
-        graph = self.graph
-
-        xss_payloads = self.get_payloads()
-        for payload_template in xss_payloads:
-            (lookup_id, payload) = self.arm_payload(payload_template)
-            # Arm the payload
-            ui_form = vector_edge.value.method_data
-
-            print("Attacking", ui_form, "with", payload)
-
-            self.use_payload(lookup_id, (vector_edge, ui_form, payload))
-
-            # Launch!
-            # input("Classes 1080 " + self.url)
-            follow_edge(self.url, driver, self.graph, vector_edge)
-
-            try:
-                for source in ui_form.sources:
-                    source['value'] = payload
-                ui_form_fill(self.url, driver, ui_form)
-            except:
-                print("PROBLEM ATTACKING ui form: ", ui_form)
-                logging.error("Can't attack event " + str(ui_form))
-
-            # Inspect
-            inspect_result = self.inspect_attack(vector_edge)
-            if inspect_result:
-                successful_xss = successful_xss.union()
-                logging.info("Found injection, don't test all")
-                break
-
-        return successful_xss
-
-    # def attack(self):
-    #     driver = self.driver
-    #     successful_xss = set()
-    #
-    #     vectors = self.extract_vectors()
-    #
-    #     pprint.pprint(vectors)
-    #
-    #     # Look for trackers (Double crawl)
-    #     done = set()
-    #     for edge in self.graph.edges:
-    #         if edge.value.method == "get":
-    #             if not check_edge(driver, self.graph, edge):
-    #                 logging.warning("Check_edge failed for in attack phase" + str(edge))
-    #             else:
-    #                 successful = follow_edge(self.url, driver, self.graph, edge)
-    #                 if successful:
-    #                     self.track_form(driver, edge)
-    #
-    #     # Try to attack vectors
-    #     events_to_attack = [(vector_type, vector) for (vector_type, vector) in vectors if vector_type == "event"]
-    #     event_c = 0
-    #     for (vector_type, vector) in events_to_attack:
-    #         print("Progress (events): ", event_c, "/", len(events_to_attack))
-    #         if vector_type == "event":
-    #             event_xss = self.attack_event(driver, vector)
-    #             successful_xss = successful_xss.union(event_xss)
-    #         event_c += 1
-    #
-    #     forms_to_attack = [(vector_type, vector) for (vector_type, vector) in vectors if vector_type == "form"]
-    #     form_c = 0
-    #     for (vector_type, vector) in forms_to_attack:
-    #         print("Progress (forms): ", form_c, "/", len(forms_to_attack))
-    #         if vector_type == "form":
-    #             form_xss = self.path_attack_form(driver, vector)
-    #
-    #             # Save to file
-    #             f = open(f"output/{self.url_domain}-{self.browser}-form_xss.txt", "a+")
-    #             for xss in form_xss:
-    #                 if xss in self.attack_lookup_table:
-    #                     f.write(str(self.attack_lookup_table) + "\n")
-    #
-    #             successful_xss = successful_xss.union(form_xss)
-    #         form_c += 1
-    #
-    #     gets_to_attack = [(vector_type, vector) for (vector_type, vector) in vectors if vector_type == "get"]
-    #     get_c = 0
-    #     for (vector_type, vector) in gets_to_attack:
-    #         print("Progress (get): ", get_c, "/", len(gets_to_attack))
-    #         if vector_type == "get":
-    #             get_xss = self.attack_get(driver, vector)
-    #             successful_xss = successful_xss.union(get_xss)
-    #         get_c += 1
-    #
-    #     # Quickly check for stored.
-    #     quick_xss = self.quick_check_xss(driver, vectors)
-    #     successful_xss = successful_xss.union(quick_xss)
-    #
-    #     print("-" * 50)
-    #     print("Successful attacks: ", len(successful_xss))
-    #     print("-" * 50)
-    #
-    #     f = open(f"output/{self.url_domain}-{self.browser}-successful_xss.txt", "w")
-    #     f.write(str(successful_xss))
-    #     f = open(f"output/{self.url_domain}-{self.browser}-attack_lookup_table.txt", "w")
-    #     f.write(str(self.attack_lookup_table))
-    #
-    #     print("ATTACK TABLE\n\n\n\n")
-    #
-    #     for (k, v) in self.attack_lookup_table.items():
-    #         if v["reflected"]:
-    #             print(k, v)
-    #             print("--" * 50)
-
-    # Quickly check all GET urls for XSS
-    # Might be worth extending to full re-crawl
-    def quick_check_xss(self, driver, vectors):
-
-        logging.info("Starting quick scan to find stored XSS")
-
-        successful_xss = set()
-
-        # GET
-        for (vector_type, url) in vectors:
-            if vector_type == "get":
-                logging.info("-- Checking: " + str(url))
-                driver.get(url)
-
-                # Inspect
-                successful_xss = successful_xss.union(self.inspect_attack(url))
-
-        logging.info("-- Total: " + str(successful_xss))
-        return successful_xss
 
     # Handle priority
     def next_unvisited_edge(self, driver, graph):
@@ -1521,7 +1220,6 @@ class Crawler:
 
         # Check for successful attacks
         time.sleep(0.1)
-        self.inspect_attack(edge)
         self.inspect_tracker(edge)
 
         if "3" in open(f"output/{self.url_domain}-{self.browser}-run.flag", "r").read():
