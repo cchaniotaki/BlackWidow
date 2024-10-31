@@ -502,12 +502,7 @@ class Crawler:
 
         logging.info("Init crawl on " + url)
 
-    def start(self, debug_mode=False, crawler_mode=False):
-
-        if (crawler_mode == False):
-            print("run both crawler module and attack module")
-        else:
-            print("only run the crawler module")
+    def start(self, debug_mode=False):
 
         self.root_req = Request("ROOTREQ", "get")
         req = Request(self.url, "get")
@@ -770,6 +765,7 @@ class Crawler:
                 # "[11:]" gives everything after "javascript:"
                 js_code = edge_in_path.n2.value.url[11:]
                 try:
+                    print("Classes 768: execute script ",js_code)
                     driver.execute_script(js_code)
                 except Exception as e:
                     print(e)
@@ -996,6 +992,7 @@ class Crawler:
 
         # Wait if needed
         try:
+            print("Classes 995: execute script return JSON.stringify(need_to_wait)")
             wait_json = driver.execute_script("return JSON.stringify(need_to_wait)")
             wait = json.loads(wait_json)
             if wait:
@@ -1007,6 +1004,7 @@ class Crawler:
 
             # Check if double check is needed...
             try:
+                print("Classes 1007: execute script return JSON.stringify(need_to_wait)")
                 wait_json = driver.execute_script("return JSON.stringify(need_to_wait)")
                 wait = json.loads(wait_json)
                 if wait:
@@ -1018,11 +1016,13 @@ class Crawler:
 
         # Timeouts
         try:
+            print("Classes 1019: execute script return JSON.stringify(timeouts)")
             resps = driver.execute_script("return JSON.stringify(timeouts)")
             todo = json.loads(resps)
             for t in todo:
                 try:
                     if t['function_name']:
+                        print("Classes 1025: execute script "+t['function_name'] + "()")
                         driver.execute_script(t['function_name'] + "()")
                 except:
                     logging.warning("Could not execute javascript function in timeout " + str(t))
@@ -1053,13 +1053,18 @@ class Crawler:
 
         # Check if we need to wait for asynch
         try:
+            print("Classes 1056: execute script return JSON.stringify(need_to_wait)")
             wait_json = driver.execute_script("return JSON.stringify(need_to_wait)")
+            print(wait_json)
         except UnexpectedAlertPresentException:
             logging.warning("Alert detected")
             alert = driver.switch_to.alert
             alert.dismiss()
+        print("Classes 1062: execute script return JSON.stringify(need_to_wait)")
         wait_json = driver.execute_script("return JSON.stringify(need_to_wait)")
         wait = json.loads(wait_json)
+        print(wait)
+
         if wait:
             time.sleep(1)
 
@@ -1130,7 +1135,6 @@ class Crawler:
         except NoAlertPresentException:
             pass
 
-        # Check for successful attacks
         time.sleep(0.1)
 
         if "3" in open(f"output/{self.url_domain}-{self.browser}-run.flag", "r").read():

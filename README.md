@@ -31,7 +31,7 @@ PATH=$PATH:.
 
 2. Run the scanner
 
-python3 crawl.py --url https://wikipedia.org --browser
+python3 crawl.py --url https://wikipedia.org --browser chrome
 
 
 ## allages pou ekana gia firefox kai edge
@@ -40,16 +40,19 @@ tha xreiastei na allakso ta javascript. gia na paizoun gia firefox kai edge
 
 arxika etreksa ta parakato site na exo output prin kano allages gia na ta sugkrino me to meta na do oti einai ola ok.
 to output prin einai apothikeumeno sto output-before-changes
-python3 crawl.py --url https://wikipedia.org --crawler --browser chrome 
-python3 crawl.py --url https://usc.edu --crawler --browser chrome 
-python3 crawl.py --url https://www.firefox.com --crawler --browser chrome 
-python3 crawl.py --url https://www.nic.do --crawler --browser chrome 
-python3 crawl.py --url https://www.paypal.com --crawler --browser chrome 
+python3 crawl.py --url https://wikipedia.org --browser chrome 
+python3 crawl.py --url https://usc.edu --browser chrome 
+python3 crawl.py --url https://www.firefox.com --browser chrome 
+python3 crawl.py --url https://www.nic.do --browser chrome 
+python3 crawl.py --url https://www.paypal.com --browser chrome 
 
 
 eprepe na kano allages se diafora simeia gi ana apofigo na kaleso url pou den einai apo to diko m website.
 
 Q: I was trying to run some sites like cnn costco etc and they take forever to run (more than 5 hours). What should I do?
+
+
+kapoies fores den m vgazei to idio apotelesma alla mikrotero. px me ti wikipedia.
 
 
 

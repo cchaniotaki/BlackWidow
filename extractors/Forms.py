@@ -43,6 +43,7 @@ def parse_form(el, driver):
         # TODO Exapnd JavaScript for all types of elements
         inputs = []
         logging.warning("No inputs founds during parse, falling back to JavaScript")
+        print("Events 46: execute script")
         resps = driver.execute_script("return get_forms()")
         js_forms = json.loads(resps)
         for js_form in js_forms:

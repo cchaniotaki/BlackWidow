@@ -16,6 +16,7 @@ def extract_ui_forms(driver):
             if (not input_type) or input_type == "text":
                 in_form = toggle.find_elements(By.XPATH,".//ancestor::form")
                 if not in_form:
+                    print("UI forms 19: execute script")
                     xpath = driver.execute_script("return getXPath(arguments[0])", toggle)
                     sources.append( {'xpath': xpath, 'value': 'jAEkPotUI'} )
         except:
@@ -26,6 +27,7 @@ def extract_ui_forms(driver):
         try:
             in_form = toggle.find_elements(By.XPATH,".//ancestor::form")
             if not in_form:
+                print("UI forms 30: execute script")
                 xpath = driver.execute_script("return getXPath(arguments[0])", toggle)
                 sources.append( {'xpath': xpath, 'value': 'jAEkPotUI'} )
         except:
@@ -38,7 +40,8 @@ def extract_ui_forms(driver):
             try:
                 in_form = button.find_elements(By.XPATH,".//ancestor::form")
                 if not in_form:
-                    xpath = driver.execute_script("return getXPath(arguments[0])", button)
+                    print("UI forms 43: execute script")
+                    xpath = driver.execute_script("getXPath(arguments[0])", button)
                     ui_forms.append( Classes.Ui_form(sources, xpath))
             except:
                 logging.warning("UI form error")

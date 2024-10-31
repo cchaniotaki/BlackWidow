@@ -12,6 +12,7 @@ from Classes import *
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.edge.service import Service as EdgeService
 
 
 parser = argparse.ArgumentParser(description='Crawler')
@@ -72,12 +73,16 @@ for f in os.listdir(dynamic_path):
 
 WebDriver.add_script = add_script
 
-
+extension_path = os.path.join(os.getcwd(), '/Users/christinechaniotaki/PycharmProjects/SQL/BlackWidow/extention')
+print(extension_path)
 def set_up_chrome_driver():
     # launch Chrome
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument("--disable-web-security")
     chrome_options.add_argument("--disable-xss-auditor")
+    chrome_options.add_argument("--auto-open-devtools-for-tabs")  # optional to view devtools
+
+    chrome_options.add_argument(f"--load-extension={extension_path}")
 
     # Set up the Chrome driver
     service = ChromeService(ChromeDriverManager().install())
@@ -85,16 +90,16 @@ def set_up_chrome_driver():
 
     # Read scripts and add script which will be executed when the page starts loading
     ## JS libraries from JaK crawler, with minor improvements
-    driver.add_script(open("js/lib.js", "r").read())
-    driver.add_script(open("js/property_obs.js", "r").read())
-    driver.add_script(open("js/md5.js", "r").read())
-    driver.add_script(open("js/addeventlistener_wrapper.js", "r").read())
-    driver.add_script(open("js/timing_wrapper.js", "r").read())
-    driver.add_script(open("js/window_wrapper.js", "r").read())
+    # driver.add_script(open("extention/lib.js", "r").read())
+    # driver.add_script(open("js/property_obs.js", "r").read())
+    # driver.add_script(open("js/md5.js", "r").read())
+    # driver.add_script(open("js/addeventlistener_wrapper.js", "r").read())
+    # driver.add_script(open("js/timing_wrapper.js", "r").read())
+    # driver.add_script(open("js/window_wrapper.js", "r").read())
     # Black Widow additions
-    driver.add_script(open("js/forms.js", "r").read())
-    driver.add_script(open("js/xss_xhr.js", "r").read())
-    driver.add_script(open("js/remove_alerts.js", "r").read())
+    # driver.add_script(open("js/forms.js", "r").read())
+    # driver.add_script(open("js/xss_xhr.js", "r").read())
+    # driver.add_script(open("js/remove_alerts.js", "r").read())
 
     return driver
 
@@ -104,28 +109,35 @@ def set_up_firefox_driver():
     firefox_options = webdriver.FirefoxOptions()
     firefox_options.add_argument("--disable-web-security")
     firefox_options.add_argument("--disable-xss-auditor")
-
+    firefox_options.add_argument("--auto-open-devtools-for-tabs")
+    # firefox_options.add_argument(f"--load-extension={extension_path}")
 
     # Set up the Frefox driver
     service = Service(GeckoDriverManager().install())
     driver = webdriver.Firefox(service=service, options=firefox_options)
 
     # Wait until a specific element is present to ensure your script has run
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, 'body')))
+    # WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, 'body')))
 
     # Add the extension after starting the session
-    driver.install_addon("/Users/christinechaniotaki/PycharmProjects/SQL/BlackWidow", temporary=True)  # Use temporary=True for a session-specific installation
+    driver.install_addon(extension_path, temporary=True)  # Use temporary=True for a session-specific installation
 
     return driver
 
 
 def set_up_edge_driver():
-    # edge_options = EdgeOptions()
-    # edge_options.set_capability("--disable-web-security")
-    # edge_options.set_capability("--disable-xss-auditor")
+    service = EdgeService(EdgeChromiumDriverManager().install())
 
-    service = Service(EdgeChromiumDriverManager().install())
-    driver = webdriver.Edge(service=service)
+    edge_options = EdgeOptions()
+    edge_options.add_argument("--disable-web-security")
+    edge_options.add_argument("--disable-xss-auditor")
+    edge_options.add_argument("--auto-open-devtools-for-tabs")  # optional to view devtools
+
+    # edge_options = Options()
+    edge_options.add_argument(f"--load-extension={extension_path}")
+
+    # options.add_argument("--headless")  # Uncomment if you want to run in headless mode
+    driver = webdriver.Edge(service=service, options=edge_options)
 
     return driver
 

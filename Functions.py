@@ -97,6 +97,7 @@ def find_state(original_url, driver, graph, edge):
                 print("compare urls: ", original_url, edge_in_path.n2.value.url)
                 if is_same_page(original_url, edge_in_path.n2.value.url):
                     driver.get(edge_in_path.n2.value.url)
+                    # time.sleep(600)
             elif method == "form":
                 form = method_data
                 try:
@@ -129,6 +130,7 @@ def find_state(original_url, driver, graph, edge):
                 # "[11:]" gives everything after "javascript:"
                 js_code = edge_in_path.n2.value.url[11:]
                 try:
+                    print("Functions 133: execute script", js_code)
                     driver.execute_script(js_code)
                 except Exception as e:
                     print(e)
@@ -215,6 +217,7 @@ def follow_edge(original_url, driver, graph, edge):
         print("compare urls: ", original_url, edge.n2.value.url)
         if is_same_page(original_url, edge.n2.value.url):
             driver.get(edge.n2.value.url)
+            # time.sleep(600)
         else:
             logging.info("Urls are not from the same webpage. ignore...")
             edge.visited = True
@@ -336,6 +339,7 @@ def execute_event(original_url, driver, do):
                     web_element.click()
                 else:
                     logging.warning("Trying to click on invisible element. Use JavaScript")
+                    print("Functions 342: execute script arguments[0].click()")
                     driver.execute_script("arguments[0].click()", web_element)
         elif do.event == "ondblclick" or do.event == "dblclick":
             web_element =  driver.find_element(By.XPATH,do.addr)
@@ -370,7 +374,6 @@ def execute_event(original_url, driver, do):
                 opts = el.find_elements(By.TAG_NAME, "option")
                 for opt in opts:
                     url = opt.get_attribute('href')
-                    print(url)
                     if url is None or is_same_page(original_url, url):
                         try:
                             opt.click()
@@ -444,6 +447,7 @@ def fuzzy_eq(form1, form2):
 def update_value_with_js(driver, web_element, new_value):
     try:
         new_value = new_value.replace("'", "\\'")
+        print("Functions 450: execute script arguments[0].value = '+new_value+' web_element")
         driver.execute_script("arguments[0].value = '"+new_value+"'", web_element)
     except Exception as e:
         logging.error(e)
@@ -478,6 +482,7 @@ def form_fill(original_url,driver, target_form):
         if not inputs:
             inputs = []
             logging.warning("No inputs founds, falling back to JavaScript")
+            print("Functions 485: execute script return get_forms()")
             resps = driver.execute_script("return get_forms()")
             js_forms = json.loads(resps)
             for js_form in js_forms:
@@ -560,6 +565,7 @@ def form_fill(original_url,driver, target_form):
                     elif iel.get_attribute("type") in ["text", "email", "url"]:
                         if iel.get_attribute("maxlength"):
                             try:
+                                print("Functions 568: execute script arguments[0].removeAttribute('maxlength')")
                                 driver.execute_script("arguments[0].removeAttribute('maxlength')", iel)
                             except Exception as e:
                                 logging.warning("[inputs] faild to change maxlength " + str(form_iel)  )
@@ -569,6 +575,7 @@ def form_fill(original_url,driver, target_form):
                         except Exception as e:
                             logging.warning("[inputs] faild to send keys to " + str(form_iel) + " Trying javascript" )
                             try:
+                                print("Functions 578: execute script arguments[0].value = ")
                                 driver.execute_script("arguments[0].value = '"+str(i.value)+"'", iel)
                             except Exception as e:
                                 logging.error(e)
@@ -686,6 +693,7 @@ def form_fill(original_url,driver, target_form):
                         logging.warning("Cannot click on invisible submit button: " + str(submit_button) + str(target_form) + " trying JavaScript click")
                         logging.info("form_fill Javascript submission of form after failed submit button click")
 
+                        print("Functions 696: execute script arguments[0].value = ")
                         driver.execute_script("arguments[0].click()", selenium_submit)
 
                         # Also try submitting the full form, shouldn't be needed
@@ -749,6 +757,7 @@ def ui_form_fill(original_url, driver, target_form):
 
         if web_element.get_attribute("maxlength"):
             try:
+                print("Functions 760: execute script")
                 driver.execute_script("arguments[0].removeAttribute('maxlength')", web_element)
             except Exception as e:
                 logging.warning("[inputs] faild to change maxlength " + str(web_element)  )
@@ -760,6 +769,7 @@ def ui_form_fill(original_url, driver, target_form):
         except Exception as e:
             logging.warning("[inputs] faild to send keys to " + str(input_value) + " Trying javascript" )
             try:
+                print("Functions 772: execute script")
                 driver.execute_script("arguments[0].value = '"+input_value+"'", web_element)
             except Exception as e:
                 logging.error(e)
