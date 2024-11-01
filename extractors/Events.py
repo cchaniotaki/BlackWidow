@@ -10,7 +10,6 @@ def extract_data_toggle(driver):
     toggles = driver.find_elements(By.XPATH, "//button[@data-toggle]")
     dos = []
     for toggle in toggles:
-        print("Events 11: execute script")
         xpath = driver.execute_script("return getXPath(arguments[0])", toggle)
         do = {'function_id': '',
               'event': 'click',
@@ -32,7 +31,6 @@ def extract_inputs(driver):
 
             in_form = toggle.find_elements(By.XPATH, ".//ancestor::form")
             if not in_form:
-                print("Events 33: execute script")
                 xpath = driver.execute_script("return getXPath(arguments[0])", toggle)
                 do = {'function_id': '',
                       'event': 'input',
@@ -44,7 +42,6 @@ def extract_inputs(driver):
 
     toggles = driver.find_elements(By.XPATH, "//textarea")
     for toggle in toggles:
-        print("Events 45: execute script")
         xpath = driver.execute_script("return getXPath(arguments[0])", toggle)
         do = {'function_id': '',
               'event': 'input',
@@ -61,7 +58,6 @@ def extract_fake_buttons(driver):
     fake_buttons = driver.find_elements(By.CLASS_NAME, "btn")
     dos = []
     for button in fake_buttons:
-        print("Events 59: execute script")
         xpath = driver.execute_script("return getXPath(arguments[0])", button)
         do = {'function_id': '',
               'event': 'click',
@@ -76,12 +72,9 @@ def extract_fake_buttons(driver):
 
 def extract_events(driver):
     # Use JavaScript to find events
-    print("Events 77: execute script")
     resps = driver.execute_script("return catch_properties()")
     todo = json.loads(resps)
-    print("todo", todo)
     # From event listeners
-    print("Events 82: execute script")
     resps = driver.execute_script("return JSON.stringify(added_events)")
     todo += json.loads(resps)
     print("todo", todo)

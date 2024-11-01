@@ -74,7 +74,6 @@ for f in os.listdir(dynamic_path):
 WebDriver.add_script = add_script
 
 extension_path = os.path.join(os.getcwd(), '/Users/christinechaniotaki/PycharmProjects/SQL/BlackWidow/extention')
-print(extension_path)
 def set_up_chrome_driver():
     # launch Chrome
     chrome_options = webdriver.ChromeOptions()

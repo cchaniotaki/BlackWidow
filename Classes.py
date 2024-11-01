@@ -967,7 +967,6 @@ class Crawler:
         todo = self.load_page(driver, graph)
         if not todo:
             print("Done crawling")
-            print(graph)
             pprint.pprint(self.io_graph)
 
             for tracker in self.io_graph:
