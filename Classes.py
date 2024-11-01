@@ -765,7 +765,6 @@ class Crawler:
                 # "[11:]" gives everything after "javascript:"
                 js_code = edge_in_path.n2.value.url[11:]
                 try:
-                    print("Classes 768: execute script ",js_code)
                     driver.execute_script(js_code)
                 except Exception as e:
                     print(e)
@@ -828,7 +827,6 @@ class Crawler:
             open(f"output/{self.url_domain}-{self.browser}-queue.txt", "w+").write("")
             open(f"output/{self.url_domain}-{self.browser}-run.flag", "w+").write("3")
 
-            # input("Classes 1213 " + self.url)
             successful = follow_edge(self.url, driver, graph, new_edge)
             if successful:
                 return new_edge
@@ -917,7 +915,6 @@ class Crawler:
                     logging.warning("Check_edge failed for " + str(edge))
                     edge.visited = True
                 else:
-                    # input("Classes 1312 " + self.url)
                     successful = follow_edge(self.url, driver, graph, edge)
                     if successful:
                         return edge
@@ -929,7 +926,6 @@ class Crawler:
                     logging.warning("Check_edge failed for " + str(edge))
                     edge.visited = True
                 else:
-                    # input("Classes 1324 " + self.url)
                     successful = follow_edge(self.url, driver, graph, edge)
                     if successful:
                         return edge
@@ -991,7 +987,6 @@ class Crawler:
 
         # Wait if needed
         try:
-            print("Classes 995: execute script return JSON.stringify(need_to_wait)")
             wait_json = driver.execute_script("return JSON.stringify(need_to_wait)")
             wait = json.loads(wait_json)
             if wait:
@@ -1003,7 +998,6 @@ class Crawler:
 
             # Check if double check is needed...
             try:
-                print("Classes 1007: execute script return JSON.stringify(need_to_wait)")
                 wait_json = driver.execute_script("return JSON.stringify(need_to_wait)")
                 wait = json.loads(wait_json)
                 if wait:
@@ -1015,13 +1009,11 @@ class Crawler:
 
         # Timeouts
         try:
-            print("Classes 1019: execute script return JSON.stringify(timeouts)")
             resps = driver.execute_script("return JSON.stringify(timeouts)")
             todo = json.loads(resps)
             for t in todo:
                 try:
                     if t['function_name']:
-                        print("Classes 1025: execute script "+t['function_name'] + "()")
                         driver.execute_script(t['function_name'] + "()")
                 except:
                     logging.warning("Could not execute javascript function in timeout " + str(t))
@@ -1029,7 +1021,6 @@ class Crawler:
             logging.warning("No timeouts from stringify")
 
         early_state = self.early_gets < self.max_early_gets
-        # input("Classes 1422 " + self.url)
         login_form = find_login_form(self.url, driver, graph, early_state)
 
         if login_form:
@@ -1052,14 +1043,12 @@ class Crawler:
 
         # Check if we need to wait for asynch
         try:
-            print("Classes 1056: execute script return JSON.stringify(need_to_wait)")
             wait_json = driver.execute_script("return JSON.stringify(need_to_wait)")
             print(wait_json)
         except UnexpectedAlertPresentException:
             logging.warning("Alert detected")
             alert = driver.switch_to.alert
             alert.dismiss()
-        print("Classes 1062: execute script return JSON.stringify(need_to_wait)")
         wait_json = driver.execute_script("return JSON.stringify(need_to_wait)")
         wait = json.loads(wait_json)
         print(wait)

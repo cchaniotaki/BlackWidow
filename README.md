@@ -31,7 +31,7 @@ PATH=$PATH:.
 
 2. Run the scanner
 
-python3 crawl.py --url https://wikipedia.org --browser chrome
+python3 crawl.py --url https://wikipedia.org --browser chrome/firefox/edge
 
 
 ## allages pou ekana gia firefox kai edge
@@ -54,8 +54,31 @@ Q: I was trying to run some sites like cnn costco etc and they take forever to r
 
 kapoies fores den m vgazei to idio apotelesma alla mikrotero. px me ti wikipedia.
 
+de xreiastike na allakso ta script. eftiaksa ena plugin kai to evala na to kalo pantou etsi. sechrome, firefox kai edge. 
+kai to vazo na trexei otan i selida ksekinaei na kanei load opote paizei tora komple gia ola. 
 
 
+python3 crawl.py --url https://wikipedia.org --browser chrome 
+python3 crawl.py --url https://wikipedia.org --browser firefox 
+python3 crawl.py --url https://wikipedia.org --browser edge 
+python3 crawl.py --url https://usc.edu --browser chrome 
+python3 crawl.py --url https://usc.edu --browser firefox 
+python3 crawl.py --url https://usc.edu --browser edge 
+python3 crawl.py --url https://www.firefox.com --browser chrome 
+python3 crawl.py --url https://www.firefox.com --browser firefox 
+python3 crawl.py --url https://www.firefox.com --browser edge 
+python3 crawl.py --url https://www.nic.do --browser chrome 
+python3 crawl.py --url https://www.nic.do --browser firefox 
+python3 crawl.py --url https://www.nic.do --browser edge 
+python3 crawl.py --url https://www.paypal.com --browser chrome 
+python3 crawl.py --url https://www.paypal.com --browser firefox 
+python3 crawl.py --url https://www.paypal.com --browser edge 
 
+eftiaksa to run.sh gia na to kano auto. 
+
+chmod +x run_tests.sh 
+ gia na mporesei na treksei
+
+./run_tests.sh 
 
 
