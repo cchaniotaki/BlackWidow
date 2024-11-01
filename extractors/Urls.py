@@ -90,21 +90,9 @@ def extract_urls(driver):
             print(traceback.format_exc())
 
     print("URLS 92: execute script return JSON.stringify(window_open_urls)")
-    # resps = driver.execute_script("return JSON.stringify(window_open_urls)")
-    # print("Edoododododood",resps)
-
-
-    # driver.add_script("console.log(123456); var xristina=10;")
-    # opened_urls = driver.execute_script("return window.window_open_urls_1;")
-    # opened_urls = driver.execute_script("return window.window_open_urls_1;")
-    # print(opened_urls)
-
-    print("mine")
-    # Retrieve the list of opened URLs
-    # opened_urls = driver.execute_script("return window.xristina;")
-    # print(opened_urls)
-
-    time.sleep(600)
+    resps = driver.execute_script("return JSON.stringify(window_open_urls)")
+    print("Edoododododood",resps)
+    # time.sleep(600)
     window_open_urls = json.loads(resps)
     print("Edoododododood1",window_open_urls)
     # time.sleep(900)
