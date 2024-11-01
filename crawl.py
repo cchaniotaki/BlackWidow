@@ -90,7 +90,7 @@ def set_up_chrome_driver():
 
     # Read scripts and add script which will be executed when the page starts loading
     ## JS libraries from JaK crawler, with minor improvements
-    # driver.add_script(open("extention/lib.js", "r").read())
+    # driver.add_script(open("js/lib.js", "r").read())
     # driver.add_script(open("js/property_obs.js", "r").read())
     # driver.add_script(open("js/md5.js", "r").read())
     # driver.add_script(open("js/addeventlistener_wrapper.js", "r").read())

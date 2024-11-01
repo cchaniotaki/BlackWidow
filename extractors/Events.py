@@ -82,10 +82,10 @@ def extract_events(driver):
     print("todo", todo)
     # From event listeners
     print("Events 82: execute script")
-    # time.sleep(600)
     resps = driver.execute_script("return JSON.stringify(added_events)")
     todo += json.loads(resps)
     print("todo", todo)
+    # time.sleep(600)
     # From data-toggle
     resps = extract_data_toggle(driver)
     todo += resps

@@ -330,11 +330,14 @@ XMLHttpRequest.prototype[\'open\'] = function() {\n\
   return original.apply(this, arguments);\n\
 }\n\
 function callbackWrap(object, property, argumentIndex, wrapperFactory) {\n\
+    console.log("sto callback wrap gamo timana s!");\n\
 	var original = object[property];\n\
+	console.log(original);\n\
 	object[property] = function() {\n\
 		wrapperFactory(this, arguments);\n\
 		return original.apply(this, arguments);\n\
 	}\n\
+	console.log(object[property]);\n\
 	return original;\n\
 }\n\
 var max_waiting_time = 65000\n\
@@ -428,6 +431,7 @@ function getXPath(element) {\n\
 }\n\
 added_events = Array();\n\
 function addEventListenerWrapper(elem, args) {\n\
+    console.log("Wrapper called with arguments:", args);\n\
 	tag = elem.tagName\n\
 	dom_adress = "";\n\
 	id = elem.id;\n\
